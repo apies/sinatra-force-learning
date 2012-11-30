@@ -1,0 +1,28 @@
+<html lang='en'>
+	<head>
+		<meta charset='utf-8'>
+		<title>Salesforce On Sinatra(learning to web api program)</title>
+		<link href='/css/style.css' rel='stylesheet'></link>
+		<script src='/js/lib/jquery-1.7.2.min.js'></script>
+		<script src='/js/lib/underscore-min.js'></script>
+		<script src='/js/lib/backbone-min.js'></script>
+		<script src='/js/lib/backbone-nested.js'></script>
+		<script src='/js/lib/handlebars.js'></script>
+		<script src='/js/App/appMustacheHelpers.js'></script>
+		<script src='/js/App/models.js'></script>
+		<script src='/js/App/collections.js'></script>
+		<script src='/js/App/views.js'></script>
+		<script src='/js/App/routers.js'></script>
+		<script src='/js/App/App.js'></script>
+		
+		</meta>
+	</head>
+	<body>
+		<a href='#' onclick='document.authenticate_form.submit();'>Authenticate using your salesforce credentials</a>
+    	<br />
+    	<br />
+    	<form action='/authenticate' id='authenticate_form' method='post' name='authenticate_form'>
+    	</form>
+	<%= yield %>
+	</body>
+</html>

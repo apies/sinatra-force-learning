@@ -6,8 +6,6 @@ require 'yaml'
 require 'oauth2'
 require 'json'
 require 'multi_json'
-require 'webrick'
-require 'webrick/https'
 require 'openssl'
 require 'pry'
 
@@ -36,9 +34,6 @@ class App < Sinatra::Base
 
 
   assets {
-    serve '/js',     from: 'app/js'        # Optional
-    serve '/css',    from: 'app/css'       # Optional
-    serve '/images', from: 'app/images'    # Optional
 
     # The second parameter defines where the compressed version will be served.
     # (Note: that parameter is optional, AssetPack will figure it out.)
@@ -46,23 +41,9 @@ class App < Sinatra::Base
       '/js/vendor/**/*.js',
       '/js/app/**/*.js'
     ]
-
-    css :application, '/css/application.css', [
-      '/css/screen.css'
-    ]
-
-    js_compression  :jsmin      # Optional
     css_compression :sass       # Optional
   }
 
-  rack_handler_config = {}
-    ssl_options = {
-      :private_key_file => '/ssl_keys/server.key',
-      :cert_chain_file => '/ssl_keys/server.crt',
-      :verify_peer => false,
-    }
-
-  #use OmniAuth::Strategies::Forcedotcom #CONFIG['CONSUMER_KEY'], CONFIG['CONSUMER_SECRET']
   set :ssl, true
 
   def self.run!
@@ -75,6 +56,25 @@ class App < Sinatra::Base
     Rack::Handler::Thin.run(self, rack_handler_config) do |server|
       server.ssl = true
       server.ssl_options = ssl_options
+    end
+  end
+
+  before do
+    pass if request.path_info == '/auth/salesforce/callback'
+    token  = session[:access_token]
+    refresh = session[:refresh_token]
+    @instance_url = session[:instance_url]
+    if token
+      @access_token = ForceToken.from_hash(App.client, { :access_token => token, :refresh_token =>  refresh, :header_format => 'OAuth %s' } )
+    else
+      redirect App.client.auth_code.authorize_url("https://localhost:3000/auth/salesforce/callback")
+    end
+  end
+
+  after do
+    if @access_token && session[:access_token] != @access_token.token
+      puts "refreshing token"
+      session[:access_token] = @access_token.token
     end
   end
 
@@ -93,17 +93,19 @@ class App < Sinatra::Base
   end
 
   get '/auth/salesforce/callback' do
-    #params.to_s
     access_token = App.client.auth_code.get_token(params[:code], :redirect_uri => "https://localhost:3000/auth/salesforce/callback")
-    session['access_token']  = access_token.token
-    session['refresh_token'] = access_token.refresh_token
-    session['instance_url']  = access_token.params['instance_url']
-    session
-
+    session[:access_token]  = access_token.token
+    session[:refresh_token] = access_token.refresh_token
+    session[:instance_url]  = access_token.params['instance_url']
+    redirect '/'
   end
 
 
   get '/' do
+    query = 'SELECT Name, Id FROM Account'
+    @accounts = @access_token.get("#{@instance_url}/services/data/v26.0/query/?q=#{CGI::escape(query)}").parsed
+    soql = "SELECT Consultant__c, Client__c, Client_Manager__c from Placement__c"
+    @placements = @access_token.get("#{@instance_url}/services/data/v26.0/query/?q=#{CGI::escape(soql)}").parsed
     erb :index
   end
 

@@ -5,4 +5,6 @@ gem 'oauth2'
 gem 'json'
 gem 'dalli'
 gem 'thin'
+gem 'pry'
+gem 'pry-debugger'
 

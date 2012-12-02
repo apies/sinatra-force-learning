@@ -1,27 +1,34 @@
 require 'sinatra/base'
-require 'sinatra/assetpack'
+#require 'sinatra/assetpack'
 
-class AssetPackDefault < Sinatra::Base
+module Sinatra
+	module AssetPackDefault
 
-	register Sinatra::AssetPack
-	
-	assets {
-	    serve '/js',     from: 'app/js'        # Optional
-	    serve '/css',    from: 'app/css'       # Optional
-	    serve '/images', from: 'app/images'    # Optional
 
-	    # The second parameter defines where the compressed version will be served.
-	    # (Note: that parameter is optional, AssetPack will figure it out.)
-	    js :app, '/js/app.js', [
-	      '/js/vendor/**/*.js',
-	      '/js/app/**/*.js'
-	    ]
+		def use_asset_pack_defaults
+			assets {
+			    serve '/js',     from: 'app/js'        # Optional
+			    serve '/css',    from: 'app/css'       # Optional
+			    serve '/images', from: 'app/images'    # Optional
 
-	    css :application, '/css/application.css', [
-	      '/css/screen.css'
-	    ]
+			    # The second parameter defines where the compressed version will be served.
+			    # (Note: that parameter is optional, AssetPack will figure it out.)
+			    js :app, '/js/app.js', [
+			      '/js/vendor/**/*.js',
+			      '/js/app/**/*.js'
+			    ]
 
-	    js_compression  :jsmin      # Optional
-	    css_compression :sass       # Optional
-  	}
+			    css :application, '/css/application.css', [
+			      '/css/screen.css'
+			    ]
+
+			    js_compression  :jsmin      # Optional
+			    css_compression :sass       # Optional
+	  		}
+		end
+
+		
+	end
+
+	register AssetPackDefault
 end
